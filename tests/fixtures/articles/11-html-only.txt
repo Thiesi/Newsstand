@@ -1,0 +1,11 @@
+From: HTML Sender <html.sender@example.com>
+Newsgroups: de.test
+Subject: HTML only
+Date: Sun, 01 Nov 2026 10:00:00 +0000
+Message-ID: <html.only@example.com>
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<html><body><p>Contact: <a href=3D"mailto:html.only.person@example.com">=
+html.only.person&#x40;example.com</a></p><p>or other&commat;example.com</p></body></html>

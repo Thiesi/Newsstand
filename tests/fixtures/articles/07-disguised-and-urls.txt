@@ -1,0 +1,22 @@
+From: Disguised <nospam.disguised@example.invalid>
+Newsgroups: de.test
+Subject: Addresses in all shapes: shape.subject@example.com
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <shapes@example.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Already disguised, leave as is: user (at) example.com, user at example dot com.
+Mailto link: mailto:mailto.person@example.org?subject=hi
+URL with an address: https://example.com/profile?mail=url.person%40example.org&x=1
+URL with userinfo: ftp://ftpuser:secret@ftp.example.net/pub/
+http://example.com/~foo/list@archive.html
+Fullwidth: fullwidth.person＠example.jp
+Entity: entity.person&#64;example.com
+Quoted local part: "john q public"@example.com
+IP literal: root@[192.0.2.1]
+Unicode local part: jürgen.bäcker@example.de
+Plus addressing: plus.user+usenet@example.com
+Uppercase: UPPER.CASE@EXAMPLE.COM
+In parens (paren.person@example.com) and brackets [bracket.person@example.com].
+At end of sentence: last.person@example.com.

@@ -1,0 +1,23 @@
+Path: roanoke!news.example.net!not-for-mail
+From: Jane Doe <jane.doe@example.com>
+Newsgroups: de.test,local.test
+Subject: Test posting, please ignore
+Date: Wed, 11 Nov 2026 20:15:00 +0100
+Organization: Example Org
+Message-ID: <abc123.fsf@jane.example.com>
+References: <older.1@mail.example.org> <older.2@news.example.net>
+Reply-To: replies-jane@example.org
+Sender: list-bounce@lists.example.net
+Lines: 12
+
+Jane Doe <jane.doe@example.com> wrote:
+> John Smith <john.smith@example.org> wrote:
+>> Does anyone have the address?
+> Try webmaster@example.net or <postmaster@example.net>.
+
+Thanks, I mailed support@example.com (and cc'd ops@example.com).
+See <news:older.1@mail.example.org> for context.
+
+-- 
+Jane Doe        | jane.doe@example.com
+http://www.example.com/~jane/

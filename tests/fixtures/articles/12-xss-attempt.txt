@@ -1,0 +1,10 @@
+From: "<script>alert(1)</script>" <xss.person@example.com>
+Newsgroups: de.test
+Subject: <img src=x onerror=alert(1)> "quotes" & ampersands
+Date: Sat, 31 Oct 2026 10:00:00 +0000
+Message-ID: <xss@example.com>
+
+<script>alert("body")</script>
+javascript:alert(1)
+https://example.com/"><script>alert(2)</script>
+<a href="javascript:alert(3)">click</a>

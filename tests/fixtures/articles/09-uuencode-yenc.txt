@@ -1,0 +1,16 @@
+From: Binary Poster <binary.poster@example.com>
+Newsgroups: de.test
+Subject: pictures (1/1)
+Date: Tue, 03 Nov 2026 10:00:00 +0000
+Message-ID: <bin.1@example.com>
+
+Here are the pictures. Questions to binary.poster@example.com.
+
+begin 644 cat.jpg
+M_]C_X``02D9)1@`!`0$`2`!(``#_VP!#``,"`@,"`@,#`P,$`P,$!0@%!00$
+`
+end
+
+=ybegin line=128 size=4 name=dog.png
+abcd
+=yend size=4

@@ -1,0 +1,12 @@
+From: =?UTF-8?B?w4VzYQ==?= =?UTF-8?B?IE5pbHNzb24=?= <asa.nilsson@example.se>
+Newsgroups: de.test
+Subject: =?UTF-8?B?w4RyZ2VyIG1pdCBkZXIgS29kaWVydW5n?=
+Date: Mon, 09 Nov 2026 12:00:00 +0000
+Message-ID: <b64.test@example.se>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: base64
+
+SMOkbGxvLCBtZWluZSBBZHJlc3NlIGlzdCDDpXNhLm5pbHNzb25AZXhhbXBsZS5zZSB1bmQgZGll
+IEFkcmVzc2Ugdm9uIErDtnJnIGlzdCBqw7ZyZ0BleGFtcGxlLmRlLg0KVW5kIGVpbiBaaXRhdDoN
+Cj4gw6VzYS5uaWxzc29uQGV4YW1wbGUuc2Ugc2NocmllYjoNCg==

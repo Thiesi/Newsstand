@@ -1,0 +1,15 @@
+From: Pattern Collector <first.last$tag@example.com>
+Newsgroups: talk.politics.misc
+Subject: Re: Patterns found on real groups
+Date: Wed, 11 Nov 2026 22:00:00 +0000
+Message-ID: <1JbcDeF@fx17.example.net>
+References: <percent.hack%relay.example.org@example.org> <first.last$tag@example.com>
+
+On 11/11/26 9:00 PM, Rc <first.last$tag@example.com>, rc.@example.com says...
+>>>>>>
+>> Quoting software already elided this one: [...]@example.de ([...]
+>> And a trailing dot in the middle of text: trailing.dot.@example.net, fine.
+> Old relay routing: percent.hack%relay.example.org@example.org
+> Redirect: http://example.com/r?u=redirect.user@example.com&x=1
+
+Reply.

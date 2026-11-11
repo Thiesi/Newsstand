@@ -1,0 +1,12 @@
+From: oldtimer@example.org (Old Timer)
+Newsgroups: de.test
+Subject: Umlaute ohne MIME: Grüße
+Date: Fri, 06 Nov 2026 10:00:00 +0100 (CET)
+Message-ID: <1996Nov6.100000.1234@news.example.org>
+Reply-To: "Old Timer" <reply.oldtimer@example.org>
+X-Comment: oldtimer@example.org
+
+In article <1996Nov5.0900.999@host.example.net>, someone@host.example.net (Some One) writes:
+>Grüße an alle!
+
+Wer schreibt, bekommt Antwort: oldtimer@example.org

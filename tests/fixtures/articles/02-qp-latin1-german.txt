@@ -1,0 +1,17 @@
+From: =?ISO-8859-1?Q?J=F6rg_M=FCller?= <joerg.mueller@example.de>
+Newsgroups: de.test
+Subject: =?ISO-8859-1?Q?Gr=FC=DFe_aus_K=F6ln?=
+Date: Tue, 10 Nov 2026 09:00:00 +0100
+Message-ID: <k0ln.2026@joerg.example.de>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+* Hans W=FCrfel <hans.wuerfel@example.de> schrieb:
+> Wer kennt die Adresse von Fr=E4ulein Schmidt?
+
+Schreib ihr an fraeulein.schmidt=40example.de oder an
+die sehr lange Adresse ganz.besonders.lange.adresse.die.umgebrochen.wur=
+de@example.de, die war hier umgebrochen.
+
+Gr=FC=DFe, J=F6rg

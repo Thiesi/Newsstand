@@ -1,0 +1,3 @@
+* text=auto eol=lf
+# Test articles must keep their exact bytes (raw 8-bit charsets, line endings).
+tests/fixtures/** -text

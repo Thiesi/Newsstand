@@ -1,0 +1,10 @@
+From: "=?UTF-8?Q?name.is.address=40example.com?=" <name.is.address@example.com>
+Newsgroups: de.test
+Subject: =?UTF-8?Q?Re:_question_from_subject.person=40example.org?=
+Date: Wed, 04 Nov 2026 10:00:00 +0000
+Message-ID: <=?utf-8?q?weird?=@example.com>
+Organization: Mail us: org.contact@example.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Body.

@@ -1,0 +1,81 @@
+/* Newsstand: additions on top of https://NetWorkXXIII.de/site.css.
+   Uses the main site's tokens only (no hex values); red stays reserved for the brand. */
+
+main { padding-block: 8px 48px; }
+.page-head { padding-block: 28px 12px; display: grid; gap: 10px; }
+.page-head h1 { font-size: clamp(28px, 5vw, 44px); letter-spacing: .02em; }
+.lead { font-size: 17px; margin: 0; max-width: 65ch; }
+.section-title { font-size: 20px; letter-spacing: .04em; margin: 24px 0 10px; }
+.group-title, .article-subject { overflow-wrap: anywhere; }
+.notice { margin: 8px 0 0; padding: 10px 14px; border-left: 3px solid var(--warn); background: var(--panel); }
+
+.stale-note { margin-top: 12px; padding-block: 10px; border-left: 3px solid var(--warn); background: var(--panel); }
+
+/* navigation */
+nav.main.news-nav { margin-right: auto; }
+nav.main.news-nav a { display: inline-flex; align-items: center; min-height: 44px; }
+.crumbs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.crumbs a { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 2px; }
+
+/* A–Z index for big hierarchy levels */
+.letters { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.letters a { font-family: var(--mono); min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding-inline: 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+.letters a[aria-current="page"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+/* search */
+.group-search { display: grid; gap: 6px; max-width: 640px; margin-top: 8px; }
+.group-search label { font-family: var(--display); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; font-size: 13px; }
+.group-search .row { display: flex; gap: 8px; }
+.group-search input { flex: 1; min-width: 0; min-height: 44px; padding: 8px 12px; font: inherit; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.group-search input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.group-search .hint { margin: 0; }
+
+/* hierarchy and group lists */
+.two-col { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 32px; }
+.nodes { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
+.node { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.node-main { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.node-name { font-family: var(--mono); font-size: 15px; display: inline-flex; align-items: center; min-height: 44px; overflow-wrap: anywhere; }
+.node .desc { flex-basis: 100%; margin: -6px 0 4px; font-size: 14px; color: var(--muted); }
+.node .also { flex-basis: 100%; font-size: 13px; margin-top: -6px; min-height: 32px; display: inline-flex; align-items: center; }
+.node-meta { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; text-align: right; white-space: nowrap; }
+.node-meta .new, .active-list .new { color: var(--ok); }
+.active-list { padding-left: 1.4em; margin: 0; display: grid; gap: 2px; }
+.active-list a { font-family: var(--mono); display: inline-flex; align-items: center; min-height: 44px; overflow-wrap: anywhere; }
+
+/* thread list */
+.threads { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
+.thread { padding: 8px 0; border-bottom: 1px solid var(--line); }
+.post { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
+.post .subj { display: inline-flex; align-items: center; min-height: 44px; overflow-wrap: anywhere; }
+.post.root .subj { font-weight: 500; }
+.post .by { color: color-mix(in srgb, var(--fg) 80%, var(--muted)); overflow-wrap: anywhere; }
+.replies { list-style: none; margin: 0; padding-left: 18px; border-left: 1px solid var(--line); }
+.replies.flat { padding-left: 0; border-left: 0; }
+.pager { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+
+/* article */
+.narrow-article { max-width: 860px; padding-top: 20px; }
+.article-subject { font-size: clamp(24px, 4vw, 34px); margin: 8px 0 16px; }
+.headers { margin: 0; display: grid; gap: 4px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.headers div { display: grid; grid-template-columns: 9.5em minmax(0, 1fr); gap: 12px; }
+.headers dt { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+.headers dd { margin: 0; overflow-wrap: anywhere; }
+.article-body { max-width: none; font-family: var(--mono); font-size: 15px; line-height: 1.5; }
+.article-body > div { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0 0 4px; }
+.article-body .q { padding-left: 12px; border-left: 3px solid var(--accent); color: var(--muted); }
+.article-body .q2 { border-left-style: double; }
+.article-body .q3 { border-left-style: dashed; }
+.article-body .q4 { border-left-style: dotted; }
+.article-body .sig { margin-top: 16px; padding-top: 8px; border-top: 1px dashed var(--line); color: var(--muted); font-size: 13.5px; }
+.attachments ul { padding-left: 1.2em; }
+
+@media (max-width: 860px) {
+  .two-col { grid-template-columns: 1fr; gap: 8px; }
+  .headers div { grid-template-columns: 1fr; gap: 0; }
+}
+@media (max-width: 620px) {
+  header.top .wrap { grid-template-columns: auto 1fr; }
+  .replies { padding-left: 10px; }
+  .group-search .row { flex-direction: column; }
+}
