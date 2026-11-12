@@ -363,3 +363,31 @@ test('logout needs the CSRF token; raw view needs a login', function () {
     eq(303, $w->get('/g/de.test/7/raw')->status);
     ok(str_contains($w->get('/g/de.test/7')->body, 'jane…@example.com'), 'obfuscated again');
 });
+
+test('review fixes: encoded-word spoofing, IPv4-mapped keys, atomic take and release', function () {
+    $lines = Composer::build('me@example.com', '=?UTF-8?B?QWRtaW4gPGJvc3NAZXhhbXBsZS5vcmc+?=', ['de.test'], '=?x?Q?y?=', 'b', '<x@y>');
+    $headers = \Newsstand\Mime\Headers::parse(implode("
+", array_slice($lines, 0, (int) array_search('', $lines, true))));
+    $decoded = $headers->decoded('From');
+    eq('=?x?Q?y?=', $headers->decoded('Subject'), 'subject decodes to the literal text');
+    eq('=?UTF-8?B?QWRtaW4gPGJvc3NAZXhhbXBsZS5vcmc+?= <me@example.com>', $decoded, 'decodes to the literal text');
+
+    eq('ip:192.0.2.1', Throttle::ipKey('::ffff:192.0.2.1'));
+    ok(Throttle::ipKey('::ffff:192.0.2.1') !== Throttle::ipKey('::ffff:198.51.100.1'));
+
+    $t = new Throttle(tempDir());
+    eq(0, $t->take('k', [60 => 2], 1000));
+    eq(0, $t->take('k', [60 => 2], 1001));
+    eq(58, $t->take('k', [60 => 2], 1002), 'third take refused');
+    eq(2, $t->count('k', 60, 1002), 'a refused take records nothing');
+    $t->release('k', 1001);
+    eq(0, $t->take('k', [60 => 2], 1002), 'room again after release');
+});
+
+test('review fixes: a successful login does not use up the failure budget', function () {
+    $w = new PostingWorld();
+    for ($i = 0; $i < 8; $i++) {
+        $w->cookies = [];
+        eq(303, $w->login()->status, "login $i");
+    }
+});

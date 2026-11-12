@@ -196,15 +196,31 @@ final class App
         }
 
         $window = $this->config->int('login_failure_window');
+        $account = 'login-fail:account:' . mb_strtolower($user);
         $keys = [
-            Throttle::ipKey($req->ip) => $this->config->int('login_failures_per_ip'),
-            'account:' . strtolower($user) => $this->config->int('login_failures_per_account'),
+            'login-fail:' . Throttle::ipKey($req->ip) => $this->config->int('login_failures_per_ip'),
+            $account => $this->config->int('login_failures_per_account'),
         ];
+        // Reserve an attempt in every counter before asking INN (atomically, so parallel requests cannot
+        // all pass the check); the reservation is taken back unless the login fails.
+        $now = time();
+        $taken = [];
         $wait = 0;
         foreach ($keys as $key => $limit) {
-            $wait = max($wait, $this->throttle->retryAfter('login-fail:' . $key, $window, $limit));
+            $wait = $this->throttle->take($key, [$window => $limit], $now);
+            if ($wait > 0) {
+                break;
+            }
+            $taken[] = $key;
         }
+        $release = function () use (&$taken, $now): void {
+            foreach ($taken as $key) {
+                $this->throttle->release($key, $now);
+            }
+            $taken = [];
+        };
         if ($wait > 0) {
+            $release();
             $r = $this->loginForm($next, 'Too many failed logins. Please wait ' . self::minutes($wait) . ' before trying again.', 429, $user);
             $r->headers['Retry-After'] = (string) $wait;
             return $r;
@@ -213,22 +229,27 @@ final class App
         try {
             $ok = $this->client()->authinfo($user, $password);
         } catch (BudgetExhausted $e) {
+            $release();
             $r = $this->loginForm($next, 'The news server is busy right now. Please try again in a minute.', 503, $user);
             $r->headers['Retry-After'] = (string) max(1, $e->retryAfter);
             return $r;
         } catch (NntpException $e) {
+            $release();
             error_log('Newsstand login: NNTP error: ' . $e->getMessage());
             return $this->loginForm($next, 'The news server is not answering right now. Please try again in a minute.', 503, $user);
         }
         if (!$ok) {
-            foreach (array_keys($keys) as $key) {
-                $this->throttle->add('login-fail:' . $key);
-            }
-            return $this->loginForm($next, 'That address and password did not work.', 422, $user);
+            return $this->loginForm($next, 'That address and password did not work.', 422, $user); // keeps the reservations
         }
 
-        $this->throttle->clear('login-fail:account:' . strtolower($user));
-        [$cookieValue] = $this->sessions->create($user, $password);
+        $release();
+        $this->throttle->clear($account);
+        try {
+            [$cookieValue] = $this->sessions->create($user, $password);
+        } catch (\RuntimeException $e) {
+            error_log('Newsstand login: cannot create a session: ' . $e->getMessage());
+            return $this->loginForm($next, 'Logging in is not possible right now because of a problem on our side.', 500, $user);
+        }
         return Response::redirect(self::safeNext($next), 303)
             ->setCookie($this->sessionCookieName(), $cookieValue)
             ->deleteCookie($this->loginCookieName());
@@ -335,16 +356,24 @@ final class App
             return $this->composePage($form, $errors, [], 422);
         }
 
-        $user = strtolower($this->session->user);
-        $limits = [600 => $this->config->int('posts_per_10_minutes'), 86400 => $this->config->int('posts_per_day')];
-        foreach ($limits as $window => $limit) {
-            $wait = $this->throttle->retryAfter('post:' . $user, $window, $limit);
-            if ($wait > 0) {
-                $r = $this->composePage($form, ['form' => 'You have reached the posting limit (' . ($window === 600 ? "$limit posts per 10 minutes" : "$limit posts per day") . '). Please wait ' . self::minutes($wait) . '; your text is still here.'], [], 429);
-                $r->headers['Retry-After'] = (string) $wait;
-                return $r;
-            }
+        // Reserve a slot atomically before connecting; it is taken back if nothing reaches INN.
+        $postKey = 'post:' . mb_strtolower($this->session->user);
+        $perTen = $this->config->int('posts_per_10_minutes');
+        $perDay = $this->config->int('posts_per_day');
+        $reservedAt = time();
+        $wait = $this->throttle->take($postKey, [600 => $perTen, 86400 => $perDay], $reservedAt);
+        if ($wait > 0) {
+            $which = $wait <= 600 ? "$perTen posts per 10 minutes" : "$perDay posts per day";
+            $r = $this->composePage($form, ['form' => "You have reached the posting limit ($which). Please wait " . self::minutes($wait) . '; your text is still here.'], [], 429);
+            $r->headers['Retry-After'] = (string) $wait;
+            return $r;
         }
+        $sent = false;
+        $unreserve = function () use (&$sent, $postKey, $reservedAt): void {
+            if (!$sent) {
+                $this->throttle->release($postKey, $reservedAt);
+            }
+        };
 
         $host = (string) parse_url($this->config->string('site_url'), PHP_URL_HOST);
         $messageId = Composer::messageId($host !== '' ? $host : 'localhost');
@@ -353,6 +382,7 @@ final class App
         try {
             $client = $this->client();
             if (!$client->authinfo($this->session->user, $this->session->password())) {
+                $unreserve();
                 $this->sessions->destroy($this->sessionCookie);
                 $this->session = null;
                 $r = $this->composePage($form, ['form' => 'The news server no longer accepts your password, so nothing was posted. Copy your text, then log in again.'], [], 403);
@@ -360,7 +390,7 @@ final class App
             }
             // Written before sending: a post must never reach INN without a trace in the log.
             $this->postLog->record($this->session->user, $req->ip, $messageId, $groups, 'sending');
-            $this->throttle->add('post:' . $user);
+            $sent = true; // from here on the attempt counts, even if INN rejects it
             try {
                 $client->post($lines);
             } catch (NntpException $e) {
@@ -372,13 +402,16 @@ final class App
             }
             $this->logResult($messageId, $groups, 'accepted');
         } catch (BudgetExhausted $e) {
+            $unreserve();
             $r = $this->composePage($form, ['form' => 'The news server is busy right now. Please send again in a minute; your text is still here.'], [], 503);
             $r->headers['Retry-After'] = (string) max(1, $e->retryAfter);
             return $r;
         } catch (NntpException $e) {
+            $unreserve();
             error_log('Newsstand post: NNTP error: ' . $e->getMessage());
             return $this->composePage($form, ['form' => 'The news server is not answering right now, so the post may not have been sent. Please check the group in a minute before sending again.'], [], 503);
         } catch (\RuntimeException $e) {
+            $unreserve();
             error_log('Newsstand post: ' . $e->getMessage());
             return $this->composePage($form, ['form' => 'Posting is not possible right now because of a problem on our side. Nothing was posted.'], [], 500);
         }

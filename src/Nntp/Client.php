@@ -135,7 +135,7 @@ final class Client
      * AUTHINFO USER/PASS (RFC 4643). INN checks the credentials (account file, then IMAP). Returns false
      * when they are rejected (481, or 482/502 for a refused sequence); throws on anything unexpected.
      */
-    public function authinfo(string $user, string $password): bool
+    public function authinfo(string $user, #[\SensitiveParameter] string $password): bool
     {
         if ($user === '' || $password === '' || preg_match('/[\r\n\0]/', $user . $password)) {
             return false;
@@ -191,7 +191,7 @@ final class Client
     }
 
     /** @return array{0: int, 1: string} */
-    public function command(string $line): array
+    public function command(#[\SensitiveParameter] string $line): array
     {
         if (preg_match('/[\r\n\0]/', $line)) {
             throw new NntpException('Refusing to send a command containing line breaks');

@@ -26,8 +26,10 @@ final class Obfuscator
             # Unquoted local part. RFC 5322 also allows & \/ = ?, but those are rare in real addresses
             # and common in URLs (?mail=a@b), so leaving them out keeps the rest of a URL readable.
             # A trailing dot is allowed: real addresses like "rc.@example.com" exist (found on Usenet).
+            # Bounded to 64 characters (the limit in RFC 5321) so a long run without an @ costs linear time,
+            # not quadratic backtracking (a 64 KB line of letters must not tie up a worker).
           | [\p{L}\p{N}!\#$%\'*+^_`{|}~-]
-            [\p{L}\p{N}!\#$%\'*+^_`{|}~.-]*
+            [\p{L}\p{N}!\#$%\'*+^_`{|}~.-]{0,63}
         )
         (?<at>@|%40|＠|&\#0*64;|&\#x0*40;|&commat;)
         (?<domain>
@@ -55,6 +57,11 @@ final class Obfuscator
     public function text(string $text): string
     {
         if ($this->reveal || $text === '') {
+            return $text;
+        }
+        // Fast path: no form of the @ separator at all (most lines). Invalid UTF-8 still goes to the regex,
+        // which fails and hides the text.
+        if (!preg_match('/@|%40|＠|&#|&commat;/i', $text) && mb_check_encoding($text, 'UTF-8')) {
             return $text;
         }
         $out = preg_replace_callback(

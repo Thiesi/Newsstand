@@ -13,7 +13,7 @@ final class Session
         public string $name,
         public readonly int $created,
         public int $seen,
-        private readonly string $password,
+        #[\SensitiveParameter] private readonly string $password,
     ) {
     }
 

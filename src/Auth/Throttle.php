@@ -40,6 +40,47 @@ final class Throttle
         return max(1, $times[count($times) - $limit] + $window - $now);
     }
 
+    /**
+     * Atomically checks and records one event: if every window in $limits (seconds => max events) still
+     * has room, the event is recorded and 0 is returned; otherwise nothing is recorded and the seconds
+     * until there is room are returned. Checking and adding under one lock means parallel requests
+     * cannot all slip past the check.
+     *
+     * @param array<int, int> $limits
+     */
+    public function take(string $key, array $limits, ?int $now = null): int
+    {
+        $now ??= time();
+        $wait = 0;
+        $this->withFile($key, true, static function (array $t) use ($now, $limits, &$wait): array {
+            $t = array_values(array_filter($t, static fn (int $x): bool => $x > $now - self::KEEP));
+            foreach ($limits as $window => $limit) {
+                $recent = array_values(array_filter($t, static fn (int $x): bool => $x > $now - $window));
+                if (count($recent) >= $limit) {
+                    sort($recent);
+                    $wait = max($wait, $recent[count($recent) - $limit] + $window - $now, 1);
+                }
+            }
+            if ($wait === 0) {
+                $t[] = $now;
+            }
+            return array_slice($t, -1000);
+        });
+        return $wait;
+    }
+
+    /** Takes back one event recorded by take() at $at (e.g. a login attempt that succeeded). */
+    public function release(string $key, int $at): void
+    {
+        $this->withFile($key, true, static function (array $t) use ($at): array {
+            $i = array_search($at, $t, true);
+            if ($i !== false) {
+                array_splice($t, (int) $i, 1);
+            }
+            return $t;
+        });
+    }
+
     public function add(string $key, ?int $now = null): void
     {
         $now ??= time();
@@ -72,6 +113,9 @@ final class Throttle
     public static function ipKey(string $ip): string
     {
         $bin = @inet_pton($ip);
+        if (is_string($bin) && strlen($bin) === 16 && str_starts_with($bin, "\0\0\0\0\0\0\0\0\0\0\xff\xff")) {
+            return 'ip:' . inet_ntop(substr($bin, 12)); // IPv4-mapped (::ffff:a.b.c.d): key on the IPv4 address
+        }
         if (is_string($bin) && strlen($bin) === 16) {
             return 'ip6:' . bin2hex(substr($bin, 0, 8));
         }
@@ -122,6 +166,6 @@ final class Throttle
 
     private function file(string $key): string
     {
-        return $this->dir . '/' . hash('sha256', strtolower($key)) . '.txt';
+        return $this->dir . '/' . hash('sha256', mb_strtolower($key)) . '.txt';
     }
 }

@@ -100,3 +100,10 @@ nav.main.news-nav a { display: inline-flex; align-items: center; min-height: 44p
 .field-error, .form-error { margin: 0; padding: 8px 12px; border-left: 3px solid var(--warn); background: var(--panel); }
 .field-error::before, .form-error::before { content: "Problem: "; font-weight: 600; }
 .actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 4px 0 0; }
+
+@media (max-width: 620px) {
+  /* Brand and section links on the first row, the account bar on its own row below. */
+  header.top .account { grid-column: 1 / -1; justify-content: space-between; }
+  header.top .account .who { flex: 1; min-width: 0; }
+  .actions .btn { flex: 1 1 auto; text-align: center; }
+}

@@ -221,7 +221,9 @@ final class Composer
         if ($name === '') {
             return $address;
         }
-        if (preg_match('/[^\x20-\x7E]/', $name)) {
+        // Non-ASCII, or text that readers would decode as an encoded-word ("=?UTF-8?B?...?="): encode it
+        // ourselves, so it decodes back to exactly what the user typed and cannot fake another address.
+        if (preg_match('/[^\x20-\x7E]/', $name) || str_contains($name, '=?')) {
             return self::encodeHeader($name) . " <$address>";
         }
         if (preg_match('/^[A-Za-z0-9!#$%&\'*+\/=?^_`{|}~ -]+$/', $name)) {
@@ -230,10 +232,13 @@ final class Composer
         return '"' . addcslashes($name, '"\\') . "\" <$address>";
     }
 
-    /** RFC 2047 B-encoding for non-ASCII text, in encoded-words short enough to fold. */
+    /**
+     * RFC 2047 B-encoding for non-ASCII text, and for text containing "=?" (which readers would otherwise
+     * decode as an encoded-word), in encoded-words short enough to fold.
+     */
     private static function encodeHeader(string $text): string
     {
-        if (!preg_match('/[^\x20-\x7E]/', $text)) {
+        if (!preg_match('/[^\x20-\x7E]/', $text) && !str_contains($text, '=?')) {
             return $text;
         }
         $words = [];

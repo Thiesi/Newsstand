@@ -41,7 +41,7 @@ final class SocketTransport implements Transport
         return new self($stream);
     }
 
-    public function writeLine(string $line): void
+    public function writeLine(#[\SensitiveParameter] string $line): void
     {
         $data = $line . "\r\n";
         while ($data !== '') {

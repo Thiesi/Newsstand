@@ -25,7 +25,7 @@ final class SessionStore
     }
 
     /** @return array{0: string, 1: Session} the cookie value and the new session */
-    public function create(string $user, string $password, string $name = '', ?int $now = null): array
+    public function create(string $user, #[\SensitiveParameter] string $password, string $name = '', ?int $now = null): array
     {
         $now ??= time();
         $id = random_bytes(18);
@@ -36,7 +36,7 @@ final class SessionStore
     }
 
     /** The session for a cookie value, or null when it is unknown, expired or tampered with. */
-    public function load(?string $cookie, ?int $now = null): ?Session
+    public function load(#[\SensitiveParameter] ?string $cookie, ?int $now = null): ?Session
     {
         $now ??= time();
         $parsed = self::parseCookie($cookie);
@@ -68,15 +68,19 @@ final class SessionStore
         }
         $session = new Session((string) $data['user'], (string) $data['csrf'], (string) ($data['name'] ?? ''), (int) $data['created'], (int) $data['seen'], $password);
         if ($now - $session->seen >= 60) {
-            // Refresh the idle timer, at most once a minute to keep writes down.
+            // Refresh the idle timer, at most once a minute to keep writes down. Only while the file still
+            // exists: a logout in a parallel request must not be undone by this write.
             $session->seen = $now;
-            $this->write($id, $key, $session);
+            clearstatcache(true, $file);
+            if (is_file($file)) {
+                $this->write($id, $key, $session);
+            }
         }
         return $session;
     }
 
     /** Saves changed fields (the display name). */
-    public function save(string $cookie, Session $session): void
+    public function save(#[\SensitiveParameter] string $cookie, Session $session): void
     {
         $parsed = self::parseCookie($cookie);
         if ($parsed !== null && is_file($this->file($parsed[0]))) {
@@ -84,7 +88,7 @@ final class SessionStore
         }
     }
 
-    public function destroy(?string $cookie): void
+    public function destroy(#[\SensitiveParameter] ?string $cookie): void
     {
         $parsed = self::parseCookie($cookie);
         if ($parsed !== null) {
@@ -109,7 +113,7 @@ final class SessionStore
         return $removed;
     }
 
-    private function write(string $id, string $key, Session $session): void
+    private function write(#[\SensitiveParameter] string $id, #[\SensitiveParameter] string $key, Session $session): void
     {
         if (!is_dir($this->dir) && !@mkdir($this->dir, 0700, true) && !is_dir($this->dir)) {
             throw new \RuntimeException('Cannot create the session directory');
@@ -145,7 +149,7 @@ final class SessionStore
     }
 
     /** @return array{0: string, 1: string}|null raw id and key */
-    private static function parseCookie(?string $cookie): ?array
+    private static function parseCookie(#[\SensitiveParameter] ?string $cookie): ?array
     {
         if ($cookie === null || !preg_match('/^([A-Za-z0-9_-]{24})\.([A-Za-z0-9_-]{43})$/D', $cookie, $m)) {
             return null;

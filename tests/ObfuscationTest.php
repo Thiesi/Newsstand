@@ -6,6 +6,7 @@ use Newsstand\Config;
 use Newsstand\Groups\GroupCache;
 use Newsstand\Mime\Headers;
 use Newsstand\Nntp\Client;
+use Newsstand\Privacy\LeakDetector;
 use Newsstand\Privacy\Obfuscator;
 use Newsstand\Web\App;
 
@@ -41,30 +42,10 @@ test('obfuscator: invalid UTF-8 never falls back to the raw text', function () {
     eq('[hidden]', Obfuscator::anonymous()->text("bad \xFF jane.doe@example.com"));
 });
 
-/** Every visible @ must directly follow a disguised local part. Returns the leaked snippets. */
+/** The leak detector lives in src/ so bin/scan-leaks.php can run it against real groups. */
 function findLeaks(string $html): array
 {
-    $text = html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-    $text = rawurldecode($text);
-    $text = str_replace(['＠', '&commat;'], '@', $text);
-    $leaks = [];
-    preg_match_all('/@/u', $text, $m, PREG_OFFSET_CAPTURE);
-    foreach ($m[0] as [, $pos]) {
-        // Byte offsets can split a multi-byte character; scrub so the /u patterns below work.
-        $before = mb_scrub(substr($text, max(0, $pos - 40), min(40, $pos)), 'UTF-8');
-        $after = mb_scrub(substr($text, $pos + 1, 30), 'UTF-8');
-        if (!preg_match('/^[\p{L}\p{N}\[]/u', $after)) {
-            continue; // not followed by a domain: not an address
-        }
-        if (preg_match('/(…"?|\[(\.\.\.|…)\])$/u', $before)) {
-            continue; // disguised by us, or already elided by the author's software ("[...]@example.de")
-        }
-        if (preg_match('/[\s<>(\[,;:\/=]$/u', $before) || $before === '') {
-            continue; // "@domain" without a local part
-        }
-        $leaks[] = trim(substr($before, -20)) . '@' . substr($after, 0, 20);
-    }
-    return $leaks;
+    return LeakDetector::find($html);
 }
 
 test('the leak detector itself catches leaks', function () {
@@ -172,4 +153,17 @@ test('URLs never contain Message-IDs and anonymous pages are publicly cacheable'
         ok(!str_contains($href, '@') && !str_contains($href, '%40') && !str_contains($href, '%3C'), "href $href");
     }
     eq('public, max-age=60', $r['article']->headers['Cache-Control']);
+});
+
+test('obfuscator: long runs without an @ cost linear time, even without PCRE JIT', function () {
+    $jit = ini_get('pcre.jit');
+    ini_set('pcre.jit', '0');
+    try {
+        $t = microtime(true);
+        $out = Obfuscator::anonymous()->text(str_repeat('a', 65536) . ' jane.doe@example.com');
+        ok(microtime(true) - $t < 3.0, 'took ' . round(microtime(true) - $t, 2) . ' s');
+        ok(str_ends_with($out, ' jane…@example.com'), 'address still disguised');
+    } finally {
+        ini_set('pcre.jit', (string) $jit);
+    }
 });
