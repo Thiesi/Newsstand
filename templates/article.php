@@ -70,6 +70,12 @@ $rows = [
   <?php endif ?>
 
   <nav class="pager" aria-label="Article navigation">
+    <?php if (($canPost ?? false) && !$tooLarge): ?>
+      <a class="btn primary" href="/post?group=<?= $h(rawurlencode($group)) ?>&amp;reply=<?= $h($number) ?>" rel="nofollow">Reply</a>
+    <?php endif ?>
+    <?php if (($currentUser ?? null) !== null): ?>
+      <a class="btn" href="<?= $h(Html::articleUrl($group, $number)) ?>/raw">Raw article</a>
+    <?php endif ?>
     <a class="btn" href="<?= $h(Html::groupUrl($group, $number + 1)) ?>">Show in thread list</a>
     <a class="btn" href="<?= $h(Html::groupUrl($group)) ?>">Back to <?= $h($group) ?></a>
   </nav>

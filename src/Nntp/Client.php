@@ -131,6 +131,54 @@ final class Client
         return $this->fetch('HEAD', $number, 221, 0);
     }
 
+    /**
+     * AUTHINFO USER/PASS (RFC 4643). INN checks the credentials (account file, then IMAP). Returns false
+     * when they are rejected (481, or 482/502 for a refused sequence); throws on anything unexpected.
+     */
+    public function authinfo(string $user, string $password): bool
+    {
+        if ($user === '' || $password === '' || preg_match('/[\r\n\0]/', $user . $password)) {
+            return false;
+        }
+        [$code, $text] = $this->command("AUTHINFO USER $user");
+        if ($code === 381) {
+            [$code, $text] = $this->command("AUTHINFO PASS $password");
+        }
+        if ($code === 281) {
+            $this->postingAdvertised = true;
+            return true;
+        }
+        if (in_array($code, [481, 482, 502], true)) {
+            return false;
+        }
+        throw new NntpException("$code $text", $code);
+    }
+
+    /**
+     * Posts an article (header and body lines without the terminating dot). Returns the server's 240 text.
+     * Throws NntpException with the server's code: 440 (posting not allowed), 441 (rejected, e.g. by
+     * Cleanfeed), 480 (not logged in).
+     *
+     * @param list<string> $lines
+     */
+    public function post(array $lines): string
+    {
+        foreach ($lines as $line) {
+            if (preg_match('/[\r\n\0]/', $line)) {
+                throw new NntpException('Refusing to post a line containing a line break', 441);
+            }
+        }
+        [$code, $text] = $this->command('POST');
+        $this->expect($code, $text, 340);
+        foreach ($lines as $line) {
+            $this->transport->writeLine(str_starts_with($line, '.') ? '.' . $line : $line);
+        }
+        $this->transport->writeLine('.');
+        [$code, $text] = $this->readStatus();
+        $this->expect($code, $text, 240);
+        return $text;
+    }
+
     public function quit(): void
     {
         try {

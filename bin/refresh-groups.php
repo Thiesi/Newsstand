@@ -3,13 +3,16 @@
 declare(strict_types=1);
 
 /*
- * Rebuilds the group cache from LIST ACTIVE and LIST NEWSGROUPS, and prunes old NNTP cache entries.
+ * Rebuilds the group cache from LIST ACTIVE and LIST NEWSGROUPS, and prunes old NNTP cache entries,
+ * expired sessions and old throttle counters.
  * Run from cron every 15 minutes:   php bin/refresh-groups.php
  * Quiet on success unless -v is given, so cron only mails on failure.
  *
  * The connection counts against the same budget as web pages; if the budget is empty, it waits a little.
  */
 
+use Newsstand\Auth\SessionStore;
+use Newsstand\Auth\Throttle;
 use Newsstand\Config;
 use Newsstand\Groups\GroupCache;
 use Newsstand\Nntp\Client;
@@ -28,6 +31,9 @@ try {
     $var = $config->string('var_dir');
 
     $pruned = (new ResponseCache($var . '/nntp-cache'))->prune($config->int('cache_max_age'));
+    $sessionDir = $config->string('session_dir');
+    (new SessionStore($sessionDir !== '' ? $sessionDir : $var . '/sessions', $config->int('session_idle'), $config->int('session_lifetime')))->prune();
+    (new Throttle($var . '/throttle'))->prune();
 
     $budget = new ConnectionBudget($var . '/nntp-budget', $config->int('nntp_budget_per_minute'), $config->int('nntp_budget_burst'));
     $waited = 0;

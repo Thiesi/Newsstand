@@ -51,6 +51,18 @@ final class Config
             'cache_fresh_overview' => 60,
             'cache_fresh_article' => 3600,
             'cache_max_age' => 86400,
+            // Logins (phase 3). session_dir defaults to <var_dir>/sessions.
+            'session_dir' => '',
+            'session_idle' => 7200,
+            'session_lifetime' => 86400,
+            // Failed logins allowed per visitor IP (IPv6: per /64) and per account, and the window in seconds.
+            'login_failures_per_ip' => 5,
+            'login_failures_per_account' => 10,
+            'login_failure_window' => 900,
+            // Post limits per user (docs/PLAN.md): 5 per 10 minutes, 30 per day, at most 3 groups.
+            'posts_per_10_minutes' => 5,
+            'posts_per_day' => 30,
+            'max_crosspost' => 3,
         ];
         return new self($values + $defaults);
     }

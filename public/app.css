@@ -79,3 +79,24 @@ nav.main.news-nav a { display: inline-flex; align-items: center; min-height: 44p
   .replies { padding-left: 10px; }
   .group-search .row { flex-direction: column; }
 }
+
+/* account bar */
+.account { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.account .who { font-family: var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.inline-form { display: inline; margin: 0; }
+.btn { min-height: 44px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+/* forms: login and compose */
+.form-page { max-width: 860px; }
+.form { display: grid; gap: 16px; margin-top: 8px; }
+.field { display: grid; gap: 6px; }
+.field label { font-family: var(--display); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; font-size: 13px; }
+.field input, .field textarea { width: 100%; min-height: 44px; padding: 8px 12px; font: inherit; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.field textarea { font-family: var(--mono); font-size: 15px; line-height: 1.5; resize: vertical; max-width: calc(72ch + 26px); }
+.field input:focus-visible, .field textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.field [aria-invalid="true"] { border-color: var(--warn); }
+.field .hint { margin: 0; }
+.field-error, .form-error { margin: 0; padding: 8px 12px; border-left: 3px solid var(--warn); background: var(--panel); }
+.field-error::before, .form-error::before { content: "Problem: "; font-weight: 600; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 4px 0 0; }

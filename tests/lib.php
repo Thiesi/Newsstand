@@ -72,6 +72,9 @@ final class FakeTransport implements Transport
 {
     /** @var list<string> */
     public array $sent = [];
+    /** @var list<string>|null lines received after a 340 reply to POST, until the terminating dot */
+    public ?array $posted = null;
+    private bool $collecting = false;
     /** @var list<string> */
     private array $queue;
 
@@ -86,6 +89,13 @@ final class FakeTransport implements Transport
 
     public function writeLine(string $line): void
     {
+        if ($this->collecting) {
+            if ($line !== '.') {
+                $this->posted[] = str_starts_with($line, '.') ? substr($line, 1) : $line;
+                return;
+            }
+            $this->collecting = false;
+        }
         $this->sent[] = $line;
         $response = $this->responses[$line] ?? null;
         if ($response === null) {
@@ -99,7 +109,11 @@ final class FakeTransport implements Transport
         if ($response instanceof Closure) {
             $response = $response($line);
         }
-        $response ??= '500 What?';
+        $response ??= $line === "." ? "240 Article received" : "500 What?";
+        if (str_starts_with($response, "340")) {
+            $this->collecting = true;
+            $this->posted = [];
+        }
         foreach (explode("\n", str_replace("\r\n", "\n", rtrim($response, "\n"))) as $l) {
             $this->queue[] = $l;
         }

@@ -22,6 +22,9 @@ $count = max(0, $info['high'] - $info['low'] + 1);
   <?php if (($cached[G::STATUS] ?? '') === 'm'): ?>
     <p class="notice"><span class="pill standby">Moderated</span> Posts to this group go to a moderator first.</p>
   <?php endif ?>
+  <?php if ($canPost ?? false): ?>
+    <p class="actions"><a class="btn" href="/post?group=<?= $h(rawurlencode($name)) ?>" rel="nofollow">New thread</a></p>
+  <?php endif ?>
 </section>
 
 <section class="wrap" aria-label="Threads">

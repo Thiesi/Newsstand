@@ -101,6 +101,13 @@ There is no web-posting test account yet. Positive posting tests come in phase 3
 - **Abuse protection:**
   - **Post limits:** the numbers above, per user.
   - **Login throttling per visitor IP, inside Newsstand.** All web logins reach the mail server's IMAP check from the same address (Roanoke). Without our own throttle, one attacker guessing passwords would slow every web login past nnrpd's 5-second authenticator limit.
+- **As built (2026-11-12, configurable in the host config):**
+  - The session cookie is `<id>.<key>`. The server keeps only a file named by a hash of the id, holding the password encrypted with the key. Sessions end after 2 hours idle or 24 hours after login, and cron prunes them.
+  - Failed logins: 5 per visitor IP (IPv6: per /64) and 10 per account in 15 minutes. Further attempts get a 429 before INN is asked.
+  - Every post attempt that reaches INN counts towards the limits, including rejected ones.
+  - The post log is `var/log/posts.log`. A "sending" line is written before the article goes to INN, then the result.
+  - Message-IDs are generated on the site's domain and contain no user data. The visitor IP is never put into the article.
+  - URLs: `/login`, `/logout` (POST), `/post?group=g[&reply=n]` and `/g/<group>/<n>/raw`.
 - **Standard web protections:**
   - CSRF tokens on every form;
   - `Secure`, `HttpOnly` and `SameSite` cookies;

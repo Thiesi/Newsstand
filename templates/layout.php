@@ -25,6 +25,17 @@ $main = rtrim($mainSite, '/');
       <a href="/">Newsgroups</a>
       <a href="/search">Search</a>
     </nav>
+    <div class="account">
+      <?php if (($currentUser ?? null) !== null): ?>
+        <span class="who small" title="Logged in"><?= $h($currentUser) ?></span>
+        <form method="post" action="/logout" class="inline-form">
+          <input type="hidden" name="csrf" value="<?= $h((string) $csrf) ?>">
+          <button type="submit" class="btn">Log out</button>
+        </form>
+      <?php else: ?>
+        <a class="btn" href="/login<?= ($loginNext ?? '/') !== '/' && ($loginNext ?? '') !== '/login' ? '?next=' . $h(rawurlencode($loginNext)) : '' ?>" rel="nofollow">Log in</a>
+      <?php endif ?>
+    </div>
   </div>
 </header>
 
