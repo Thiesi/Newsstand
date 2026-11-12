@@ -167,3 +167,32 @@ test('obfuscator: long runs without an @ cost linear time, even without PCRE JIT
         ini_set('pcre.jit', (string) $jit);
     }
 });
+
+/** The regex the Obfuscator used to run directly; its hand-written scanner must give the same result. */
+function obfuscateWithOracle(string $text): string
+{
+    $pattern = '/(?<local>"[^"\r\n]{1,64}"|[\p{L}\p{N}!\#$%\'*+^_`{|}~-][\p{L}\p{N}!\#$%\'*+^_`{|}~.-]{0,63})'
+        . '(?<at>@|%40|＠|&\#0*64;|&\#x0*40;|&commat;)'
+        . '(?<domain>\[[0-9A-Fa-f:.]{2,45}\]|[\p{L}\p{N}_](?:[\p{L}\p{N}_-]*[\p{L}\p{N}_])?(?:\.[\p{L}\p{N}_](?:[\p{L}\p{N}_-]*[\p{L}\p{N}_])?)*)/iu';
+    $disguise = new ReflectionMethod(Obfuscator::class, 'disguiseLocal');
+    $o = Obfuscator::anonymous();
+    return (string) preg_replace_callback($pattern, fn ($m) => $disguise->invoke($o, $m['local']) . $m['at'] . $m['domain'], $text);
+}
+
+test('obfuscator: the scanner matches the reference regex (fixtures and fuzzing)', function () {
+    $o = Obfuscator::anonymous();
+    foreach (glob(__DIR__ . '/fixtures/articles/*.txt') as $file) {
+        $text = mb_scrub((string) file_get_contents($file), 'UTF-8');
+        eq(obfuscateWithOracle($text), $o->text($text), basename($file));
+    }
+    $tokens = ['a', 'b', 'Z', '9', '.', '..', '-', '_', '+', '@', '%40', '%', '4', '＠', '&#64;', '&#x40;', '&COMMAT;', '&', '#',
+        '"', ' ', "\n", 'ä', 'é', '日', 'x.y', 'ex-ample.com', '[1.2.3.4]', '[', ']', '<', '>', '=', '?', '/', '(', ')', ',', '…', str_repeat('q', 70)];
+    mt_srand(23);
+    for ($n = 0; $n < 4000; $n++) {
+        $s = '';
+        for ($k = mt_rand(1, 30); $k > 0; $k--) {
+            $s .= $tokens[mt_rand(0, count($tokens) - 1)];
+        }
+        eq(obfuscateWithOracle($s), $o->text($s), 'input ' . json_encode($s, JSON_UNESCAPED_UNICODE));
+    }
+});

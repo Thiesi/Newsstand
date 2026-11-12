@@ -628,6 +628,16 @@ final class App
         if (!$this->groupMayExist($group)) {
             return $this->error(404, 'No such group', 'There is no newsgroup by that name on this server.');
         }
+        // Anonymous article pages are the same for everyone, and decoding plus hiding addresses in a big
+        // article costs real time without PCRE JIT. So the rendered page is cached as long as the article.
+        $anonymous = $this->session === null && !$this->obfuscator->reveals();
+        $pageKey = "page\0article\0$group\0$number";
+        if ($anonymous) {
+            $hit = $this->cache->get($pageKey);
+            if ($hit !== null && $hit[1] <= $this->config->int('cache_fresh_article') && is_string($hit[0]['html'] ?? null)) {
+                return new Response(200, $hit[0]['html'], ['Content-Type' => 'text/html; charset=utf-8']);
+            }
+        }
         [$data, $staleAge] = $this->articleData($group, $number);
         if (isset($data['missing'])) {
             return $this->error(404, 'No such article', 'That article is not (or no longer) on this server.');
@@ -639,7 +649,7 @@ final class App
         $article = Article::fromRaw((string) $data['raw']);
         $subject = $article->headers->decoded('Subject') ?? '(no subject)';
         $status = $this->groupStatus($group);
-        return $this->page('article', [
+        $response = $this->page('article', [
             'title' => $subject . ' · ' . $group,
             'description' => "Article in $group",
             'group' => $group,
@@ -652,6 +662,10 @@ final class App
             'canPost' => in_array($status, ['y', 'm'], true),
             'staleAge' => $staleAge,
         ]);
+        if ($anonymous && $staleAge === null && $response->status === 200) {
+            $this->cache->put($pageKey, ['html' => $response->body]);
+        }
+        return $response;
     }
 
     /**
