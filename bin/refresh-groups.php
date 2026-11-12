@@ -45,7 +45,7 @@ try {
     $count = (new GroupCache($var . '/cache'))->refresh($client);
     $client->quit();
     if ($verbose) {
-        printf("%d groups cached in %.1f s; %d old NNTP cache entries pruned\n", $count, microtime(true) - $started, $pruned);
+        printf("%d groups cached in %.1f s, peak memory %.1f MB; %d old NNTP cache entries pruned\n", $count, microtime(true) - $started, memory_get_peak_usage(true) / 1048576, $pruned);
     }
 } catch (Throwable $e) {
     fwrite(STDERR, 'refresh-groups: ' . $e->getMessage() . "\n");
