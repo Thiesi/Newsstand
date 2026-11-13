@@ -57,11 +57,10 @@ final class ServerCheck
         } else {
             $this->add(self::FAIL, 'PHP ' . PHP_VERSION . ' is too old: Newsstand needs 8.3 or later');
         }
-        foreach (['mbstring', 'iconv', 'openssl'] as $ext) {
-            if (!extension_loaded($ext)) {
-                $this->add(self::FAIL, "PHP extension $ext is missing");
-            }
-        }
+        $missing = array_values(array_filter(['mbstring', 'iconv', 'openssl'], static fn (string $e) => !extension_loaded($e)));
+        $this->add($missing === [] ? self::OK : self::FAIL, $missing === []
+            ? 'PHP extensions mbstring, iconv and openssl are loaded'
+            : 'PHP extension(s) missing: ' . implode(', ', $missing));
         if (extension_loaded('openssl')) {
             $key = random_bytes(32);
             $iv = random_bytes(12);
@@ -113,8 +112,12 @@ final class ServerCheck
                 is_dir($sessionDir) ? $this->checkDir($sessionDir, 'sessions') : $this->add(self::FAIL, "session_dir $sessionDir does not exist");
             }
             $log = "$var/log/posts.log";
-            if (is_file($log) && !is_writable($log)) {
-                $this->add(self::FAIL, "$log is not writable: posting will fail");
+            if (is_file($log)) {
+                $this->add(is_writable($log) ? self::OK : self::FAIL, is_writable($log)
+                    ? "$log (post log) is writable"
+                    : "$log (post log) is not writable: posting will fail");
+            } elseif (is_writable(is_dir("$var/log") ? "$var/log" : $var)) {
+                $this->add(self::OK, "$log (post log) does not exist yet; it is created with the first post");
             }
         }
         if (function_exists('posix_geteuid') && posix_geteuid() === 0) {
