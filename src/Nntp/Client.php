@@ -190,6 +190,15 @@ final class Client
         $this->transport->close();
     }
 
+    /**
+     * Drops the connection without sending anything. Use it when the server is waiting for article data
+     * (after a 340): QUIT would be taken as article text, and an unfinished article is discarded.
+     */
+    public function abandon(): void
+    {
+        $this->transport->close();
+    }
+
     /** @return array{0: int, 1: string} */
     public function command(#[\SensitiveParameter] string $line): array
     {

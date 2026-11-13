@@ -37,6 +37,33 @@ The plan and the decisions behind it are in [docs/PLAN.md](docs/PLAN.md).
    It is quiet unless something fails. Use `-v` for timings. It also prunes the article cache, expired
    sessions and old throttle counters.
 
+## After changing the server
+
+Run the self-check as the web user, with the same `NEWSSTAND_CONFIG` as the pool:
+
+```sh
+php bin/check-server.php [--group=NAME] [--inetd-limit=50] [--offline]
+```
+
+It checks PHP, the configuration, the files and the age of the group cache. Then it uses one NNTP
+connection to check that the server refuses posting without login and that `LIST`, `GROUP`, `OVER` and
+`ARTICLE` work. It never logs in and never posts. Exit code: 0 all fine, 1 warnings, 2 failures.
+
+What Newsstand depends on:
+
+| Dependency | What it needs | If it breaks |
+|---|---|---|
+| NNTP listener | `nnrpd` on loopback, port from the config | nothing loads |
+| Read-only until login | greeting says "(no posting)"; anonymous `POST` gets 480 | **anonymous visitors could post**: stop the site |
+| Login chain | `AUTHINFO USER`/`PASS`, checked by INN (account file, then IMAP) | logins and posting fail; reading works |
+| Spawn limit | inetd limit on the listener above `nntp_budget_per_minute` + `nntp_budget_burst` (pass `--inetd-limit`) | the listener closes for everyone for 10 minutes |
+| Commands | `LIST ACTIVE`, `LIST NEWSGROUPS`, `GROUP`, `OVER` (overview data), `ARTICLE`, `POST` | the matching pages fail |
+| Group status | `y` or `m` in the active file for groups that take posts | posting is refused |
+| PHP | 8.3+ with `mbstring`, `iconv`, `openssl` (AES-256-GCM); works within 64 MB and without PCRE JIT | pages fail |
+| Configuration | `NEWSSTAND_CONFIG` set in both the pool and the crontab | the wrong or no config is used |
+| Cron | `bin/refresh-groups.php` every 15 minutes | stale group list; old sessions and counters pile up |
+| Files | `var_dir` (caches, sessions, limit counters, `log/posts.log`) writable by the web user only | logins or posting fail; moving it logs everyone out |
+
 ## Development
 
 ```sh
